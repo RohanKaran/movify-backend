@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from recommendation import recommend, preProcessing
+import uvicorn
 
 app = FastAPI()
 
