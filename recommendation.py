@@ -11,6 +11,10 @@ config = dotenv_values(".env")
 movies_link = config.get("MOVIES_LINK")
 crew_link = config.get("CREW_LINK")
 ratings_link = config.get("RATINGS_LINK")
+if os.getenv('MOVIES_LINK'):
+    movies_link = os.getenv("MOVIES_LINK")
+    crew_link = os.getenv("CREW_LINK")
+    ratings_link = os.getenv("RATINGS_LINK")
 
 
 def recommend(movie):
