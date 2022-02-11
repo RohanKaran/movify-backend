@@ -1,0 +1,4 @@
+data
+.env
+final_df.pkl
+similarity_matrix.pkl
