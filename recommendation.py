@@ -1,4 +1,5 @@
 import pickle
+import time
 from datetime import timedelta, datetime
 from functools import lru_cache, wraps
 from urllib.request import urlopen, urlretrieve
@@ -37,13 +38,15 @@ def fetchDataFromKaggle():
     # urlretrieve(link['files'][1]['url'], "similarity_matrix.pkl")
     # # sm = pickle.load(urlopen(link['files'][1]['url']))
     # sm = pickle.load(open('similarity_matrix.pkl', 'rb'))
-    print("hi")
     return f
 
 
 def recommend(movie):
     f = fetchDataFromKaggle()
+    start = time.time()
     cv = CountVectorizer(max_features=5000)
+    vector = time.time()
+    print("Vectorized", vector-start)
     vectors = cv.fit_transform(f['tags']).toarray()
     similarity_mat = cosine_similarity(vectors)
 
@@ -58,6 +61,6 @@ def recommend(movie):
     mlist = dict(sorted(mlist.items(), reverse=True, key=lambda item: item[1]))
 
     result = []
-    for i in range(len(f)):
+    for i in mlist:
         result.append({f.iloc[i].tconst: f.iloc[i].primaryTitle})
     return result
