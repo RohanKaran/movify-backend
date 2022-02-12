@@ -1,86 +1,55 @@
-import os
-import time
-import numpy as np
-import pandas as pd
-import pickle as pk
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-from dotenv import dotenv_values
+import pickle
+from datetime import timedelta, datetime
+from functools import lru_cache, wraps
+from urllib.request import urlopen
+from kaggle import KaggleApi
 
-config = dotenv_values(".env")
-movies_link = config.get("MOVIES_LINK")
-crew_link = config.get("CREW_LINK")
-ratings_link = config.get("RATINGS_LINK")
-if os.getenv('MOVIES_LINK'):
-    movies_link = os.getenv("MOVIES_LINK")
-    crew_link = os.getenv("CREW_LINK")
-    ratings_link = os.getenv("RATINGS_LINK")
+
+def timed_lru_cache(seconds: int, maxsize: int = 512):
+    def wrapper_cache(func):
+        func = lru_cache(maxsize=maxsize)(func)
+        func.lifetime = timedelta(seconds=seconds)
+        func.expiration = datetime.utcnow() + func.lifetime
+
+        @wraps(func)
+        def wrapped_func(*args, **kwargs):
+            if datetime.utcnow() >= func.expiration:
+                func.cache_clear()
+                func.expiration = datetime.utcnow() + func.lifetime
+
+            return func(*args, **kwargs)
+
+        return wrapped_func
+
+    return wrapper_cache
+
+
+@timed_lru_cache(24 * 3600)
+def fetchDataFromKaggle():
+    api = KaggleApi()
+    api.authenticate()
+    link = api.kernel_output(user_name='rohankaran', kernel_slug='movie-recommendation-system')
+    print(link)
+    f = pickle.load(urlopen(link['files'][0]['url']))
+    sm = pickle.load(urlopen(link['files'][1]['url']))
+    # sm = pickle.load(open('data/similarity_matrix.pkl', 'rb'))
+    print("hi")
+    return f, sm
 
 
 def recommend(movie):
-    similarity_mat = pk.load(open('similarity_matrix.pkl', 'rb'))
-    f = pk.load(open('final_df.pkl', 'rb'))
+    f, similarity_mat = fetchDataFromKaggle()
     movie = f[f.primaryTitle == movie]
     movie_index = movie.index[len(movie) - 1]
     distances = similarity_mat[movie_index]
     mlist = sorted(list(enumerate(distances)), reverse=True, key=lambda item: item[1])[1:21]
 
     mlist = dict(mlist)
-
-    print(mlist)
     for key in mlist:
         mlist[key] *= f.iloc[key].popularity
     mlist = dict(sorted(mlist.items(), reverse=True, key=lambda item: item[1]))
-    print(mlist)
+
     result = []
     for i in mlist:
-        result.append(f.iloc[i].primaryTitle)
+        result.append({f.iloc[i].tconst: f.iloc[i].primaryTitle})
     return result
-
-
-def preProcessing():
-    start = time.time()
-    movies = pd.read_csv(movies_link, sep='\t', dtype=str)
-    movies['startYear'] = movies['startYear'].replace("\\N", '0')
-    movies['startYear'] = movies['startYear'].astype(int)
-    movies['runtimeMinutes'] = pd.to_numeric(movies.runtimeMinutes, errors="coerce")
-    movies['runtimeMinutes'] = movies['runtimeMinutes'].replace(np.nan, 0)
-    movies['runtimeMinutes'] = movies['runtimeMinutes'].astype(float).astype(int)
-    movies_processed = movies[
-        ((movies.titleType == 'movie') | (movies.titleType == 'tvSeries')) & (movies.genres != '\\N')]
-
-    crews = pd.read_csv(crew_link, sep='\t', dtype=str)
-    crews['directors'] = crews['directors'].replace("\\N", '')
-    crews['writers'] = crews['writers'].replace("\\N", '')
-    crews['crews'] = crews['writers'].str.split(",") + crews['directors'].str.split(",")
-    crews = crews.drop(['writers', 'directors'], axis=1)
-    final = pd.merge(movies_processed, crews, on='tconst')
-    final['isAdult'] = final['isAdult'].replace('0', 'notadult')
-    final['isAdult'] = final['isAdult'].replace('1', 'isadult')
-    final['genres'] = final['genres'].str.split(',')
-
-    ratings = pd.read_csv(ratings_link, sep='\t', dtype={'tconst': str, 'averageRating': float, 'numVotes': int})
-    ratings['popularity'] = ratings['averageRating'] * ratings['numVotes']
-    ratings = ratings[ratings.popularity >= ratings.popularity.mean()]
-    ratings = ratings[ratings.popularity >= ratings.popularity.mean()]
-    ratings_min = ratings['popularity'].min()
-    ratings_max = ratings['popularity'].max()
-    ratings['popularity'] = (ratings['popularity'] - ratings_min) / (ratings_max - ratings_min)
-    ratings = ratings.drop(['averageRating', 'numVotes'], axis=1)
-    final = pd.merge(final, ratings, on='tconst')
-    final['titleType'] = final['titleType'].str.split(',')
-    final['tags'] = final['titleType'] + final['titleType'] + final['isAdult'].str.split() + final['crews'] + final[
-        'genres']
-    print(final['tags'])
-    f = final[['tconst', 'tags', 'primaryTitle', 'popularity']]
-    f['tags'] = f['tags'].apply(lambda x: " ".join(x).lower())
-
-    pk.dump(f, open('final_df.pkl', 'wb'))
-    # cv = CountVectorizer(token_pattern=r"\S+")
-    # vectors = cv.fit_transform(f['tags']).toarray()
-    # similarity_matrix = cosine_similarity(vectors)
-    # pk.dump(similarity_matrix, open('similarity_matrix.pkl', 'wb'))
-    end = time.time()
-    print(end - start)
-# print(f[f['primaryTitle'] == 'The Avengers'].index[2])
-# print(f[f['primaryTitle'] == 'Avengers: Age of Ultron'])

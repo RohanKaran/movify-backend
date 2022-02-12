@@ -1,8 +1,13 @@
 from fastapi import FastAPI
-from recommendation import recommend, preProcessing
-import uvicorn
+from recommendation import recommend, fetchDataFromKaggle
+
 
 app = FastAPI()
+
+
+@app.on_event("startup")
+async def startup_event():
+    fetchDataFromKaggle()
 
 
 @app.get("/")
@@ -10,15 +15,10 @@ async def root():
     return {"message": "Hello World"}
 
 
-@app.get("/hello/{name}")
-async def say_hello(name: str):
-    return {"message": f"Hello {name}"}
-
-
 @app.post("/daily_update")
 async def daily_update(s: str):
     if s.strip() == 'update':
-        preProcessing()
+        fetchDataFromKaggle()
         return "Success!"
     return "Error!"
 
