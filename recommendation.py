@@ -38,17 +38,17 @@ def fetchDataFromKaggle():
     # urlretrieve(link['files'][1]['url'], "similarity_matrix.pkl")
     # # sm = pickle.load(urlopen(link['files'][1]['url']))
     # sm = pickle.load(open('similarity_matrix.pkl', 'rb'))
-    return f
-
-
-def recommend(movie):
-    f = fetchDataFromKaggle()
     start = time.time()
     cv = CountVectorizer(max_features=5000)
     vector = time.time()
-    print("Vectorized", vector-start)
+    print("Vectorized", vector - start)
     vectors = cv.fit_transform(f['tags']).toarray()
-    similarity_mat = cosine_similarity(vectors)
+    sm = cosine_similarity(vectors)
+    return f, sm
+
+
+def recommend(movie):
+    f,  similarity_mat = fetchDataFromKaggle()
 
     movie = f[f.primaryTitle == movie]
     movie_index = movie.index[len(movie) - 1]
