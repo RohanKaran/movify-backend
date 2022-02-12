@@ -32,10 +32,10 @@ def fetchDataFromKaggle():
     print(link)
     f = pickle.load(urlopen(link['files'][0]['url']))
     sm = urlopen(link['files'][1]['url'])
-    with open("data/similarity_matrix.pkl", "wb") as file:
+    with open("similarity_matrix.pkl", "wb") as file:
         file.write(sm)
     # sm = pickle.load(urlopen(link['files'][1]['url']))
-    sm = pickle.load(open('data/similarity_matrix.pkl', 'rb'))
+    sm = pickle.load(open('similarity_matrix.pkl', 'rb'))
     print("hi")
     return f, sm
 
