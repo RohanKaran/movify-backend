@@ -43,7 +43,7 @@ def fetchDataFromKaggle():
 
 def recommend(movie):
     f = fetchDataFromKaggle()
-    cv = CountVectorizer(max_features=7000)
+    cv = CountVectorizer(max_features=5000)
     vectors = cv.fit_transform(f['tags']).toarray()
     similarity_mat = cosine_similarity(vectors)
 
