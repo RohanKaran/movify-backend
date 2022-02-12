@@ -4,6 +4,9 @@ from functools import lru_cache, wraps
 from urllib.request import urlopen, urlretrieve
 from kaggle import KaggleApi
 
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
 
 def timed_lru_cache(seconds: int, maxsize: int = 512):
     def wrapper_cache(func):
@@ -31,15 +34,19 @@ def fetchDataFromKaggle():
     link = api.kernel_output(user_name='rohankaran', kernel_slug='movie-recommendation-system')
     print(link)
     f = pickle.load(urlopen(link['files'][0]['url']))
-    urlretrieve(link['files'][1]['url'], "similarity_matrix.pkl")
-    # sm = pickle.load(urlopen(link['files'][1]['url']))
-    sm = pickle.load(open('similarity_matrix.pkl', 'rb'))
+    # urlretrieve(link['files'][1]['url'], "similarity_matrix.pkl")
+    # # sm = pickle.load(urlopen(link['files'][1]['url']))
+    # sm = pickle.load(open('similarity_matrix.pkl', 'rb'))
     print("hi")
-    return f, sm
+    return f
 
 
 def recommend(movie):
-    f, similarity_mat = fetchDataFromKaggle()
+    f = fetchDataFromKaggle()
+    cv = CountVectorizer(max_features=7000)
+    vectors = cv.fit_transform(f['tags']).toarray()
+    similarity_mat = cosine_similarity(vectors)
+
     movie = f[f.primaryTitle == movie]
     movie_index = movie.index[len(movie) - 1]
     distances = similarity_mat[movie_index]
