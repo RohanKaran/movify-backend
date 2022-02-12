@@ -1,7 +1,7 @@
 import pickle
 from datetime import timedelta, datetime
 from functools import lru_cache, wraps
-from urllib.request import urlopen
+from urllib.request import urlopen, urlretrieve
 from kaggle import KaggleApi
 
 
@@ -31,9 +31,7 @@ def fetchDataFromKaggle():
     link = api.kernel_output(user_name='rohankaran', kernel_slug='movie-recommendation-system')
     print(link)
     f = pickle.load(urlopen(link['files'][0]['url']))
-    sm = urlopen(link['files'][1]['url'])
-    with open("similarity_matrix.pkl", "wb") as file:
-        file.write(sm)
+    urlretrieve(link['files'][1]['url'], "similarity_matrix.pkl")
     # sm = pickle.load(urlopen(link['files'][1]['url']))
     sm = pickle.load(open('similarity_matrix.pkl', 'rb'))
     print("hi")
