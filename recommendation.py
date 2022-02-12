@@ -31,8 +31,11 @@ def fetchDataFromKaggle():
     link = api.kernel_output(user_name='rohankaran', kernel_slug='movie-recommendation-system')
     print(link)
     f = pickle.load(urlopen(link['files'][0]['url']))
-    sm = pickle.load(urlopen(link['files'][1]['url']))
-    # sm = pickle.load(open('data/similarity_matrix.pkl', 'rb'))
+    sm = urlopen(link['files'][1]['url'])
+    with open("data/similarity_matrix.pkl", "wb") as file:
+        file.write(sm)
+    # sm = pickle.load(urlopen(link['files'][1]['url']))
+    sm = pickle.load(open('data/similarity_matrix.pkl', 'rb'))
     print("hi")
     return f, sm
 
@@ -50,6 +53,6 @@ def recommend(movie):
     mlist = dict(sorted(mlist.items(), reverse=True, key=lambda item: item[1]))
 
     result = []
-    for i in mlist:
+    for i in range(len(f)):
         result.append({f.iloc[i].tconst: f.iloc[i].primaryTitle})
     return result
