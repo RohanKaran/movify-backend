@@ -39,21 +39,21 @@ def fetchDataFromKaggle():
     # urlretrieve(link['files'][1]['url'], "similarity_matrix.pkl")
     # # sm = pickle.load(urlopen(link['files'][1]['url']))
     # sm = pickle.load(open('similarity_matrix.pkl', 'rb'))
-    start = time.time()
-    cv = CountVectorizer(max_features=7000)
-    vector = time.time()
-    print("Vectorized", vector - start)
-    vectors = cv.fit_transform(f['tags']).toarray()
-    sm = cosine_similarity(vectors)
-    with bz2.BZ2File('data/similarity_mat.pbz2', 'w') as file:
-        pickle.dump(sm, file)
-    return f
+    # start = time.time()
+    # cv = CountVectorizer(max_features=7000)
+    # vector = time.time()
+    # print("Vectorized", vector - start)
+    # vectors = cv.fit_transform(f['tags']).toarray()
+    # sm = cosine_similarity(vectors)
+    # with bz2.BZ2File('data/similarity_mat.pbz2', 'w') as file:
+    #     pickle.dump(sm, file)
+    sm = pickle.load(bz2.BZ2File('data/similarity_mat.pbz2', 'rb'))
+    return f, sm
 
 
 def recommend(movie):
-    f = fetchDataFromKaggle()
-    similarity_mat = bz2.BZ2File('data/similarity_mat.pbz2', 'rb')
-    similarity_mat = pickle.load(similarity_mat)
+    f, similarity_mat = fetchDataFromKaggle()
+
     movie = f[f.primaryTitle == movie]
     movie_index = movie.index[len(movie) - 1]
     distances = similarity_mat[movie_index]
