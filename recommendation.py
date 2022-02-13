@@ -1,4 +1,5 @@
 import pickle
+import bz2
 import time
 from datetime import timedelta, datetime
 from functools import lru_cache, wraps
@@ -44,12 +45,15 @@ def fetchDataFromKaggle():
     print("Vectorized", vector - start)
     vectors = cv.fit_transform(f['tags']).toarray()
     sm = cosine_similarity(vectors)
-    return f, sm
+    with bz2.BZ2File('data/similarity_mat.pbz2', 'w') as file:
+        pickle.dump(sm, file)
+    return f
 
 
 def recommend(movie):
-    f,  similarity_mat = fetchDataFromKaggle()
-
+    f = fetchDataFromKaggle()
+    similarity_mat = bz2.BZ2File('data/similarity_mat.pbz2', 'rb')
+    similarity_mat = pickle.load(similarity_mat)
     movie = f[f.primaryTitle == movie]
     movie_index = movie.index[len(movie) - 1]
     distances = similarity_mat[movie_index]
