@@ -5,14 +5,17 @@ from recommendation import recommend, fetchDataFromKaggle
 app = FastAPI()
 
 
-@app.on_event("startup")
-def startup_event():
-    fetchDataFromKaggle()
-
-
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+
+@app.post("/daily_update")
+async def daily_update(s: str):
+    if s.strip() == 'update':
+        fetchDataFromKaggle()
+        return "Success!"
+    return "Error!"
 
 
 @app.post("/recommendation")

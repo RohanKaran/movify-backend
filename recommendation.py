@@ -1,6 +1,5 @@
 import pickle
 import bz2
-import time
 from datetime import timedelta, datetime
 from functools import lru_cache, wraps
 from urllib.request import urlopen, urlretrieve
