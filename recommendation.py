@@ -1,5 +1,4 @@
 import pickle
-import bz2
 from datetime import timedelta, datetime
 from functools import lru_cache, wraps
 from urllib.request import urlopen, urlretrieve
@@ -28,13 +27,14 @@ def timed_lru_cache(seconds: int, maxsize: int = 2):
     return wrapper_cache
 
 
-@timed_lru_cache(24 * 3600)
+@timed_lru_cache(86400)
 def fetchDataFromKaggle():
     api = KaggleApi()
     api.authenticate()
     link = api.kernel_output(user_name='rohankaran', kernel_slug='movie-recommendation-system')
-    print(link)
     f = pickle.load(urlopen(link['files'][0]['url']))
+
+    print(f)
     # urlretrieve(link['files'][1]['url'], "similarity_matrix.pkl")
     # # sm = pickle.load(urlopen(link['files'][1]['url']))
     # sm = pickle.load(open('similarity_matrix.pkl', 'rb'))
@@ -46,12 +46,14 @@ def fetchDataFromKaggle():
     # sm = cosine_similarity(vectors)
     # with bz2.BZ2File('data/similarity_mat.pbz2', 'w') as file:
     #     pickle.dump(sm, file)
-    sm = pickle.load(bz2.BZ2File('data/similarity_mat.pbz2', 'rb'))
-    return f, sm
+    return f
 
 
 def recommend(movie):
-    f, similarity_mat = fetchDataFromKaggle()
+    f = fetchDataFromKaggle()
+    cv = CountVectorizer(max_features=5000, stop_words='english')
+    vectors = cv.fit_transform(f['tags'])
+    similarity_mat = cosine_similarity(vectors)
 
     movie = f[f.primaryTitle == movie]
     movie_index = movie.index[len(movie) - 1]
