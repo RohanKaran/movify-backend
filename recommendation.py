@@ -7,27 +7,12 @@ from kaggle import KaggleApi
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+from cachetools import cached, TTLCache
 
-def timed_lru_cache(seconds: int, maxsize: int = 128):
-    def wrapper_cache(func):
-        func = lru_cache(maxsize=maxsize)(func)
-        func.lifetime = timedelta(seconds=seconds)
-        func.expiration = datetime.utcnow() + func.lifetime
-
-        @wraps(func)
-        def wrapped_func(*args, **kwargs):
-            if datetime.utcnow() >= func.expiration:
-                func.cache_clear()
-                func.expiration = datetime.utcnow() + func.lifetime
-
-            return func(*args, **kwargs)
-
-        return wrapped_func
-
-    return wrapper_cache
+cache = TTLCache(maxsize=2, ttl=86400)
 
 
-@timed_lru_cache(86400)
+@cached(cache)
 def fetchDataFromKaggle():
     api = KaggleApi()
     api.authenticate()
