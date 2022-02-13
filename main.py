@@ -5,9 +5,9 @@ from recommendation import recommend, fetchDataFromKaggle
 app = FastAPI()
 
 
-@app.on_event("startup")
-async def startup_event():
-    fetchDataFromKaggle()
+# @app.on_event("startup")
+# async def startup_event():
+#     fetchDataFromKaggle()
 
 
 @app.get("/")
