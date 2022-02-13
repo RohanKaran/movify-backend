@@ -39,7 +39,7 @@ def fetchDataFromKaggle():
     # # sm = pickle.load(urlopen(link['files'][1]['url']))
     # sm = pickle.load(open('similarity_matrix.pkl', 'rb'))
     start = time.time()
-    cv = CountVectorizer(max_features=5000)
+    cv = CountVectorizer(max_features=7000)
     vector = time.time()
     print("Vectorized", vector - start)
     vectors = cv.fit_transform(f['tags']).toarray()
